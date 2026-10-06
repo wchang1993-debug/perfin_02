@@ -1,6 +1,6 @@
 import { formatarData, formatarMes, formatarPercentual, formatarPp, formatarReais } from "@/lib/formatacao";
 import type { DecisaoCopom, EstatisticasCambio, StatusMeta } from "@/lib/indicadores/tipos";
-import { priorizar, type Destaque } from "./tipos";
+import type { Destaque } from "./tipos";
 
 // Limiares das regras de destaque (regra de negócio A5).
 export const LIMIAR_VARIACAO_CAMBIO = 3; // % no período
@@ -91,6 +91,6 @@ function regraCopom({ decisoes, selicAtual }: DadosMacro): Destaque[] {
 
 const REGRAS = [regraMeta, regraPreviaIpca, regraJuroReal, regraSpreadIgpm, regraCambio, regraPoupanca, regraCopom];
 
-export function destaquesMacro(dados: DadosMacro, maximo?: number): Destaque[] {
-  return priorizar(REGRAS.flatMap((regra) => regra(dados)), maximo);
+export function destaquesMacro(dados: DadosMacro): Destaque[] {
+  return REGRAS.flatMap((regra) => regra(dados));
 }

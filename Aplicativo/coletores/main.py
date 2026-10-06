@@ -19,14 +19,20 @@ from zoneinfo import ZoneInfo
 
 from .comum.execucao import executar_coleta
 from .comum.supabase import ClienteSupabase
-from .fontes import bcb, feriados, tesouro_direto
+from .fontes import anbima_curvas, anbima_debentures, anbima_indices, anbima_titulos, bcb, feriados, tesouro_direto
 
 Coletor = Callable[[ClienteSupabase, date], int]
 
 GRUPOS: dict[str, dict[str, Coletor]] = {
     "macro": {"bcb": bcb.coletar, "tesouro_direto": tesouro_direto.coletar},
-    # Coletores ANBIMA e B3 entram aqui (ondas 2 e 3), atrás da chave de licença.
-    "mercado": {},
+    # Atrás da chave de licença (COLETA_ANBIMA_B3_ATIVA). Títulos antes de debêntures: o spread das
+    # debêntures IPCA+ usa a NTN-B do mesmo dia.
+    "mercado": {
+        "anbima_titulos": anbima_titulos.coletar,
+        "anbima_curvas": anbima_curvas.coletar,
+        "anbima_indices": anbima_indices.coletar,
+        "anbima_debentures": anbima_debentures.coletar,
+    },
     "feriados": {"feriados": feriados.coletar},
 }
 

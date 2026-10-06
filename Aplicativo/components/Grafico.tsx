@@ -34,6 +34,12 @@ interface Props {
   tipo?: "linha" | "barras" | "degraus";
   faixa?: { de: number; ate: number; rotulo: string };
   altura?: number;
+  // "data": eixo de datas (séries históricas); "prazo": eixo em dias úteis exibido em anos (curvas).
+  eixo?: "data" | "prazo";
+}
+
+function rotuloPrazo(du: unknown): string {
+  return `${formatarNumero(Number(du) / 252, 1)}a`;
 }
 
 function formatar(valor: unknown, formato: FormatoValor): string {
@@ -42,16 +48,22 @@ function formatar(valor: unknown, formato: FormatoValor): string {
   return formatarNumero(n, formato === "cotacao" ? 4 : 2);
 }
 
-export function Grafico({ titulo, dados, series, formato = "percentual", tipo = "linha", faixa, altura = 300 }: Props) {
+export function Grafico({ titulo, dados, series, formato = "percentual", tipo = "linha", faixa, altura = 300, eixo = "data" }: Props) {
   if (dados.length === 0) {
     return <p className="suave">Sem dados para {titulo.toLowerCase()} no período.</p>;
   }
-  const eixoX = <XAxis dataKey="data" tickFormatter={(d: string) => formatarData(d)} minTickGap={32} fontSize={11} />;
+  const rotuloX = eixo === "prazo" ? rotuloPrazo : (d: unknown) => formatarData(String(d));
+  const eixoX =
+    eixo === "prazo" ? (
+      <XAxis dataKey="du" type="number" domain={["dataMin", "dataMax"]} tickFormatter={rotuloX} fontSize={11} />
+    ) : (
+      <XAxis dataKey="data" tickFormatter={rotuloX} minTickGap={32} fontSize={11} />
+    );
   const eixoY = <YAxis tickFormatter={(v: number) => formatar(v, formato)} width={72} fontSize={11} domain={["auto", "auto"]} />;
   const grade = <CartesianGrid stroke="#E6E7E8" vertical={false} />;
   const dica = (
     <Tooltip
-      labelFormatter={(d) => formatarData(String(d))}
+      labelFormatter={(d) => (eixo === "prazo" ? `${rotuloPrazo(d)} (${d} du)` : formatarData(String(d)))}
       formatter={(v) => formatar(v, formato)}
       contentStyle={{ borderRadius: 0, borderColor: "#BCBEC0", fontSize: 12 }}
     />

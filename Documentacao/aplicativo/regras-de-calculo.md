@@ -23,6 +23,16 @@ e `0005_tesouro_direto.sql`). A interface só formata. Taxas em %: 0,56 signific
 | Taxa DI1 | `(100.000 / PU)^(252/du) − 1` | `taxa_di1` |
 | Taxa a termo | `((1+r2)^(du2/252) / (1+r1)^(du1/252))^(252/(du2−du1)) − 1` | `taxa_termo` |
 | Tesouro Direto | mínimo e máximo 12m, média 5 anos e percentil 5 anos da taxa de venda | `tesouro_direto_resumo` |
+| Vértices-chave | 6m, 1, 2, 3, 5 e 10 anos: vértice publicado pela ANBIMA; sem ele, Svensson. Implícita: `(1+pré)/(1+real) − 1` | `vertices_chave` |
+| Deslocamento de curva | Δ da taxa em bps contra 1, 5, 21 e 252 pregões antes (datas coletadas) | `deslocamento_curvas` |
+| Inclinação | pré 10 anos − pré 2 anos, em bps | `historico_vertices` |
+| Títulos públicos | Δ da taxa indicativa ANBIMA em bps (1, 5 e 21 pregões) | `titulos_variacao` |
+| Spread do varejo | indicativa ANBIMA − taxa de compra do Tesouro Direto, mesmo vencimento (LTN, NTN-F, NTN-B, LFT), em bps | `spread_varejo` |
+| Spread de debênture | IPCA+: indicativa − NTN-B de referência; DI+: o próprio spread; prefixada: indicativa − curva pré (Svensson) na duration; %DI: sem spread em bps | `spreads_debentures` |
+| Faixas de duration | até 2 anos (≤ 504 du), 2 a 5 anos (≤ 1.260 du), acima de 5 anos | `spreads_debentures` |
+| Resumo de crédito | 1º quartil, mediana e 3º quartil do spread por indexador e faixa | `resumo_spreads` |
+| Variação de debênture | Δ da taxa indicativa contra o dia anterior coletado, em bps | `maiores_variacoes_debentures` |
+| Índices ANBIMA | `(último / primeiro número-índice − 1) · 100`; base 100 sobre o primeiro dia do período | `indices_desempenho`, `indices_base100` |
 
 Séries mensais do BCB são datadas no dia 1º do mês; os filtros consideram o mês da data de início.
 
@@ -31,6 +41,7 @@ Séries mensais do BCB são datadas no dia 1º do mês; os filtros consideram o 
 - PU do DI1 de 90.000 com 252 du → **11,1111%** a.a.
 - 10% em 252 du e 12% em 504 du → termo de **14,0364%** a.a.
 - Semana do Carnaval de 2026 (13/02 a 20/02) → **3** dias úteis.
+- Svensson com os parâmetros ANBIMA de 05/10/2026 → curva pré em 252 du de **12,6798%**, igual ao vértice publicado.
 
 ## Dados desatualizados
 - Série diária: mais de 2 dias úteis sem dado.
@@ -49,8 +60,22 @@ No máximo 6, priorizados por severidade ("atenção" antes de "informativo") e 
 | Poupança | % do CDI no período, quando calculável | informativo |
 | Copom | Selic atual e última mudança; 2+ decisões seguidas na mesma direção ganham destaque | informativo |
 
+### Destaques de mercado (`lib/destaques/mercado.ts`)
+
+| Regra | Quando aparece | Severidade |
+|---|---|---|
+| Inclinação da curva pré | 10a − 2a mudou ≥ 15 bps na semana (`LIMIAR_INCLINACAO_BPS`) | informativo |
+| Inflação implícita 5a | sempre; acima do teto da meta vira atenção | atenção / informativo |
+| NTN-B mais longa | taxa andou ≥ 20 bps na semana (`LIMIAR_NTNB_SEMANA_BPS`) | informativo |
+| Spread do varejo | maior spread positivo entre Tesouro Direto e ANBIMA | informativo |
+| IMA-B | variação no mês e % do CDI do mês | informativo |
+| Crédito | mediana IPCA+ mudou ≥ 10 bps em ~1 mês (`LIMIAR_SPREAD_CREDITO_BPS`); abrindo vira atenção | atenção / informativo |
+| Debênture no dia | taxa indicativa andou ≥ 100 bps no dia (`LIMIAR_DEBENTURE_DIA_BPS`), até 2 debêntures | atenção |
+
 ## Relatório do mês
 - Mês padrão: último mês com IPCA divulgado.
 - Status **Completo** quando IPCA, IPCA-15, INPC, IGP-M e poupança do mês estão disponíveis; senão **Preliminar**, com a lista do que falta.
-- Abas: Resumo, Destaques, Comparativo, Séries (24 meses) e Notas (fontes, fórmulas e aviso legal).
+- Abas: Resumo, Destaques, Curvas, Renda fixa, Crédito, Tesouro Direto, Comparativo, Séries (24 meses) e Notas (fontes, fórmulas e aviso legal).
+- Mercado: último dia coletado até o fim do mês, comparado com o último dia até o fim do mês anterior. Abas sem dados não são criadas.
+- O aviso legal cita a ANBIMA apenas quando há dados dela no relatório.
 - O Portal só cria **rascunhos** no Gmail; o envio é sempre feito pela pessoa.

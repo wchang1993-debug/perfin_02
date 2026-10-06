@@ -7,6 +7,7 @@ import { obterAccessToken } from "@/lib/google/tokens";
 import { formatarMes } from "@/lib/formatacao";
 import { clienteSupabaseServidor } from "@/lib/supabase/servidor";
 import { corpoEmail, montarAbas, statusDoRelatorio, tituloRelatorio } from "./conteudo";
+import { temDadosAnbima } from "./conteudo-mercado";
 import { coletarDadosRelatorio } from "./dados";
 
 export const NOME_PASTA_DRIVE = "Portal Perfin — Relatórios";
@@ -86,7 +87,12 @@ export async function criarRascunhoDoRelatorio(
   const rascunho = await criarRascunho(accessToken, {
     para: destinatario,
     assunto: `Indicadores econômicos — ${formatarMes(relatorio.mes_referencia)} | Perfin Wealth Management`,
-    corpoTexto: corpoEmail({ mes: relatorio.mes_referencia, destaques: dados.destaques, urlPlanilha: relatorio.planilha_url }),
+    corpoTexto: corpoEmail({
+      mes: relatorio.mes_referencia,
+      destaques: dados.destaques,
+      urlPlanilha: relatorio.planilha_url,
+      comAnbima: temDadosAnbima(dados.mercado),
+    }),
     anexo: { nome: nomeArquivoXlsx(relatorio.mes_referencia), mime: MIME_XLSX, conteudo: Buffer.from(xlsx) },
   });
   return rascunho.id;

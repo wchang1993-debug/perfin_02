@@ -2,6 +2,7 @@ import { z } from "zod";
 import { formatarData, formatarMes, formatarNumero, formatarPercentual } from "@/lib/formatacao";
 import { PERIODOS } from "@/lib/indicadores/filtro";
 import type { Painel } from "@/lib/indicadores/painel";
+import { linhasContextoMercado } from "./contexto-mercado";
 
 // Entrada do chat, validada no servidor. Os dados NUNCA vêm do navegador: só o filtro.
 export const LIMITE_MENSAGEM = 2000;
@@ -25,7 +26,7 @@ export type Pergunta = z.infer<typeof esquemaPergunta>;
 export const INSTRUCAO_SISTEMA = [
   "Você é o assistente de análise do Portal Perfin, usado pelo time da Perfin Wealth Management.",
   "Responda em português do Brasil, de forma executiva e precisa.",
-  "Use SOMENTE os dados fornecidos no bloco DADOS. Cite o período e a fonte (BCB/SGS) quando usar um número.",
+  "Use SOMENTE os dados fornecidos no bloco DADOS. Cite a data ou o período e a fonte (BCB/SGS, ANBIMA ou Tesouro Direto) quando usar um número.",
   "Se a informação pedida não estiver nos dados, diga claramente que ela não está disponível no Portal.",
   "Não faça recomendação de investimento personalizada e não fale sobre clientes.",
   "Não invente números nem projeções.",
@@ -64,6 +65,7 @@ export function montarContexto(painel: Painel): string {
     linhas.push("", "ÚLTIMAS MUDANÇAS DA SELIC META:");
     ultimasDecisoes.forEach((d) => linhas.push(`- ${formatarData(d.data)}: ${formatarPercentual(d.selic_anterior)} → ${formatarPercentual(d.selic_nova)}`));
   }
+  linhas.push(...linhasContextoMercado(painel.mercado));
   if (painel.destaques.length) {
     linhas.push("", "DESTAQUES:", ...painel.destaques.map((d) => `- ${d.texto}`));
   }

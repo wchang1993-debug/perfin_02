@@ -4,6 +4,8 @@ import { TabelaMensal } from "@/components/TabelaMensal";
 import { serie, serie12m, statusMeta } from "@/lib/indicadores/consultas";
 import { lerFiltro } from "@/lib/indicadores/filtro";
 import { diferencaSeries, mesclarSeries } from "@/lib/indicadores/graficos";
+import { historicoVertices } from "@/lib/mercado/consultas";
+import { SemDadosMercado } from "@/components/SemDadosMercado";
 
 export const metadata = { title: "Inflação" };
 
@@ -12,7 +14,7 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 export default async function Inflacao({ searchParams }: Props) {
   const filtro = lerFiltro(await searchParams);
   const { inicio, fim } = filtro;
-  const [ipca, ipca15, inpc, igpm, ipca12, igpm12, meta] = await Promise.all([
+  const [ipca, ipca15, inpc, igpm, ipca12, igpm12, meta, implicita] = await Promise.all([
     serie("IPCA", inicio, fim),
     serie("IPCA15", inicio, fim),
     serie("INPC", inicio, fim),
@@ -20,6 +22,7 @@ export default async function Inflacao({ searchParams }: Props) {
     serie12m("IPCA", inicio, fim),
     serie12m("IGPM", inicio, fim),
     statusMeta(fim),
+    historicoVertices(inicio, fim),
   ]);
 
   const mensal = mesclarSeries({ IPCA: ipca, IPCA15: ipca15, INPC: inpc, IGPM: igpm });
@@ -60,8 +63,19 @@ export default async function Inflacao({ searchParams }: Props) {
           <Grafico titulo="Spread IGP-M − IPCA em 12 meses (p.p.)" formato="numero" dados={spread} series={[{ chave: "SPREAD", nome: "Spread" }]} />
         </section>
         <section className="painel">
-          <h2>Inflação implícita (ETTJ ANBIMA)</h2>
-          <p className="suave">Disponível quando a coleta das curvas ANBIMA for ativada (onda 2).</p>
+          {implicita.length === 0 ? (
+            <>
+              <h2>Inflação implícita (ETTJ ANBIMA)</h2>
+              <SemDadosMercado fonte="curvas de juros" />
+            </>
+          ) : (
+            <Grafico
+              titulo="Inflação implícita de 5 anos — ETTJ ANBIMA (%)"
+              dados={implicita.map((h) => ({ data: h.data, implicita: h.implicita_5a }))}
+              series={[{ chave: "implicita", nome: "Implícita 5a" }]}
+              faixa={meta ? { de: meta.piso, ate: meta.teto, rotulo: "Banda da meta" } : undefined}
+            />
+          )}
         </section>
       </div>
       <section className="painel">

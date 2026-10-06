@@ -1,4 +1,5 @@
 import "server-only";
+import { ErroConsulta, rpc } from "@/lib/supabase/rpc";
 import { clienteSupabaseServidor } from "@/lib/supabase/servidor";
 
 export interface ResumoTesouro {
@@ -21,14 +22,8 @@ export interface PontoTesouro {
   pu_venda: number | null;
 }
 
-export async function resumoTesouroDireto(): Promise<ResumoTesouro[]> {
-  const supabase = await clienteSupabaseServidor();
-  const { data, error } = await supabase.rpc("tesouro_direto_resumo");
-  if (error) {
-    console.error(`[titulos] resumo falhou: ${error.code ?? ""} ${error.message}`);
-    throw new Error("Não foi possível carregar o Tesouro Direto.");
-  }
-  return data as ResumoTesouro[];
+export function resumoTesouroDireto(): Promise<ResumoTesouro[]> {
+  return rpc<ResumoTesouro[]>("tesouro_direto_resumo");
 }
 
 export async function historicoTesouro(titulo: string, vencimento: string, inicio: string, fim: string): Promise<PontoTesouro[]> {
@@ -44,7 +39,7 @@ export async function historicoTesouro(titulo: string, vencimento: string, inici
     .limit(5000);
   if (error) {
     console.error(`[titulos] histórico falhou: ${error.code ?? ""} ${error.message}`);
-    throw new Error("Não foi possível carregar o histórico do título.");
+    throw new ErroConsulta("o histórico do título");
   }
   return data as PontoTesouro[];
 }

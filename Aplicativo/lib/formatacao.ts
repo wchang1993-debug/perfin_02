@@ -27,10 +27,10 @@ export function formatarPp(valor: Numero, casas = 2): string {
   return `${n > 0 ? "+" : ""}${decimal(n, casas)} p.p.`;
 }
 
-export function formatarBps(valor: Numero): string {
+export function formatarBps(valor: Numero, comSinal = true): string {
   const n = paraNumero(valor);
   if (n === null) return TRACO;
-  return `${n > 0 ? "+" : ""}${decimal(n, 0)} bps`;
+  return `${comSinal && n > 0 ? "+" : ""}${decimal(n, 0)} bps`;
 }
 
 export function formatarReais(valor: Numero, casas = 2): string {

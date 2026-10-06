@@ -39,6 +39,9 @@ refaz o login uma vez por semana para usar Agenda, Relatórios e Gmail.
    - Variable: `COLETA_ANBIMA_B3_ATIVA` = `false` (até validar a licença ANBIMA/B3).
 2. Rode o workflow **Coleta de indicadores** manualmente com o grupo `macro` para a carga inicial (5 anos do BCB e
    todo o histórico do Tesouro Direto). Depois ele roda sozinho às 09:00 BRT; falhas chegam por e-mail.
+3. Depois de validar a licença ANBIMA, mude `COLETA_ANBIMA_B3_ATIVA` para `true`. O grupo `mercado` roda às
+   21:30 BRT em dias úteis e coleta títulos públicos, curvas (ETTJ), índices IMA e debêntures. Os arquivos públicos
+   da ANBIMA trazem só os últimos dias (o IMA, só o último): o histórico se forma a partir da primeira coleta.
 
 ## Gerar a chave de cifra
 ```bash

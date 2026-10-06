@@ -1,6 +1,8 @@
 import "server-only";
 import { destaquesMacro, type DadosMacro } from "@/lib/destaques/macro";
-import type { Destaque } from "@/lib/destaques/tipos";
+import { destaquesMercado } from "@/lib/destaques/mercado";
+import { priorizar, type Destaque } from "@/lib/destaques/tipos";
+import { montarPainelMercado, type PainelMercado } from "@/lib/mercado/painel";
 import {
   acumuladoPeriodo,
   decisoesCopom,
@@ -11,6 +13,7 @@ import {
   ultimosValores,
 } from "./consultas";
 import type { Filtro } from "./filtro";
+import { percentualDoCdi } from "./percentual-cdi";
 import type { UltimoValor } from "./tipos";
 
 // Monta os dados da visão geral para um filtro. Reaproveitado pela tela, pelo relatório e pelo assistente.
@@ -19,6 +22,7 @@ export interface Painel {
   filtro: Filtro;
   ultimos: UltimoValor[];
   dados: DadosMacro;
+  mercado: PainelMercado | null;
   cdiNoPeriodo: number | null;
   ipcaNoPeriodo: number | null;
   destaques: Destaque[];
@@ -27,12 +31,6 @@ export interface Painel {
 function ultimoDe(ultimos: UltimoValor[], codigo: string) {
   const item = ultimos.find((u) => u.codigo === codigo);
   return item?.data && item.valor !== null ? { data: item.data, valor: item.valor } : null;
-}
-
-// % do CDI = r_ativo / r_CDI · 100; "n/d" (null) quando o CDI do período não é positivo (regra A3.3).
-export function percentualDoCdi(rentabilidade: number | null, cdi: number | null): number | null {
-  if (rentabilidade === null || cdi === null || cdi <= 0) return null;
-  return (rentabilidade / cdi) * 100;
 }
 
 export async function montarPainel(filtro: Filtro): Promise<Painel> {
@@ -66,5 +64,7 @@ export async function montarPainel(filtro: Filtro): Promise<Painel> {
     decisoes,
   };
 
-  return { filtro, ultimos, dados, cdiNoPeriodo: cdi, ipcaNoPeriodo: ipcaPeriodo, destaques: destaquesMacro(dados) };
+  const mercado = await montarPainelMercado(meta?.teto ?? null);
+  const destaques = priorizar([...destaquesMacro(dados), ...(mercado ? destaquesMercado(mercado.dados) : [])]);
+  return { filtro, ultimos, dados, mercado, cdiNoPeriodo: cdi, ipcaNoPeriodo: ipcaPeriodo, destaques };
 }

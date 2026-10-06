@@ -3,6 +3,7 @@ import { acumuladoPeriodo, serie, simulacao10mil, statusMeta, ultimosValores } f
 import { montarPainel } from "@/lib/indicadores/painel";
 import type { CodigoIndicador, UltimoValor } from "@/lib/indicadores/tipos";
 import type { DadosRelatorio, LinhaResumo } from "./conteudo";
+import { coletarDadosMercadoRelatorio } from "./dados-mercado";
 
 const CODIGOS_RESUMO: CodigoIndicador[] = ["IPCA", "IPCA15", "INPC", "IGPM", "POUP", "CDI", "SELIC", "USD", "EUR"];
 const CODIGOS_COMPARATIVO: CodigoIndicador[] = ["CDI", "POUP", "IPCA", "USD"];
@@ -45,7 +46,7 @@ export async function coletarDadosRelatorio(mes: string): Promise<DadosRelatorio
   const ultimos = await ultimosValores();
   const itens = CODIGOS_RESUMO.map((c) => ultimos.find((u) => u.codigo === c)).filter((u): u is UltimoValor => !!u);
 
-  const [resumo, meta, comparativoAno, comparativo12m, series, painel] = await Promise.all([
+  const [resumo, meta, comparativoAno, comparativo12m, series, painel, mercado] = await Promise.all([
     Promise.all(itens.map((item) => linhaResumo(item, mes))),
     statusMeta(mes),
     simulacao10mil(CODIGOS_COMPARATIVO, j.inicioAno, j.fimMes),
@@ -58,6 +59,7 @@ export async function coletarDadosRelatorio(mes: string): Promise<DadosRelatorio
       })),
     ),
     montarPainel({ periodo: "personalizado", inicio: j.inicioMes, fim: j.fimMes }),
+    coletarDadosMercadoRelatorio(j.fimMes, j.fimMesAnterior),
   ]);
 
   return {
@@ -69,5 +71,6 @@ export async function coletarDadosRelatorio(mes: string): Promise<DadosRelatorio
     comparativoAno,
     comparativo12m,
     series,
+    mercado,
   };
 }

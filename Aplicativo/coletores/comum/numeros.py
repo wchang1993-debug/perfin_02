@@ -31,6 +31,14 @@ def data_br(texto: str) -> date:
         raise ErroFormato(f"Data inválida: {texto!r}") from erro
 
 
+def data_compacta(texto: str) -> date:
+    """'20261005' -> date(2026, 10, 5)."""
+    try:
+        return datetime.strptime(texto.strip(), "%Y%m%d").date()
+    except ValueError as erro:
+        raise ErroFormato(f"Data inválida: {texto!r}") from erro
+
+
 def validar_cabecalho(recebido: list[str], esperado: list[str], fonte: str) -> None:
     """Falha explicitamente se a fonte mudar o layout (evita gravar colunas trocadas)."""
     normalizado = [coluna.strip() for coluna in recebido]

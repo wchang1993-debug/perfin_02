@@ -3,7 +3,10 @@ import { FiltroPeriodo } from "@/components/FiltroPeriodo";
 import { Grafico } from "@/components/Grafico";
 import { formatarData, formatarNumero, formatarPercentual, formatarReais } from "@/lib/formatacao";
 import { filtroParaQuery, lerFiltro } from "@/lib/indicadores/filtro";
+import { datasMercado, spreadVarejo, titulosVariacao } from "@/lib/mercado/consultas";
 import { historicoTesouro, resumoTesouroDireto } from "@/lib/titulos/consultas";
+import { SemDadosMercado } from "@/components/SemDadosMercado";
+import { TabelaSpreadVarejo, TabelaTitulosAnbima } from "@/components/TabelasTitulos";
 
 export const metadata = { title: "Títulos públicos" };
 
@@ -12,7 +15,10 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 export default async function Titulos({ searchParams }: Props) {
   const parametros = await searchParams;
   const filtro = lerFiltro(parametros);
-  const resumo = await resumoTesouroDireto();
+  const [resumo, datas] = await Promise.all([resumoTesouroDireto(), datasMercado()]);
+  const [anbima, varejo] = datas.titulos
+    ? await Promise.all([titulosVariacao(datas.titulos), spreadVarejo(datas.titulos)])
+    : [[], []];
   const chave = typeof parametros.titulo === "string" ? parametros.titulo : null;
   const selecionado = resumo.find((r) => `${r.titulo}|${r.vencimento}` === chave) ?? resumo[0] ?? null;
   const historico = selecionado
@@ -22,8 +28,20 @@ export default async function Titulos({ searchParams }: Props) {
   return (
     <>
       <p className="rotulo">Títulos públicos</p>
-      <h1>Tesouro Direto</h1>
+      <h1>Títulos públicos e Tesouro Direto</h1>
       <FiltroPeriodo filtro={filtro} caminho="/titulos" />
+      <section className="painel">
+        <h2>Taxas indicativas ANBIMA{datas.titulos ? ` — ${formatarData(datas.titulos)}` : ""}</h2>
+        {anbima.length === 0 ? <SemDadosMercado fonte="títulos públicos ANBIMA" /> : <TabelaTitulosAnbima titulos={anbima} />}
+      </section>
+      {varejo.length > 0 && (
+        <section className="painel">
+          <h2>Spread do varejo</h2>
+          <p className="suave pequeno">Positivo: quem compra no Tesouro Direto recebe menos que a taxa de mercado do título equivalente.</p>
+          <TabelaSpreadVarejo linhas={varejo} />
+        </section>
+      )}
+      <h2>Tesouro Direto</h2>
       {resumo.length === 0 ? (
         <p className="aviso">Ainda não há dados do Tesouro Direto. Rode a coleta &quot;macro&quot; no GitHub Actions.</p>
       ) : (
@@ -76,8 +94,7 @@ export default async function Titulos({ searchParams }: Props) {
               </table>
             </div>
             <p className="suave pequeno">
-              Percentil 5a: posição da taxa atual entre as taxas dos últimos 5 anos (100 = a maior). Taxas indicativas
-              ANBIMA e o spread do varejo entram com a coleta ANBIMA (onda 2).
+              Percentil 5a: posição da taxa atual entre as taxas dos últimos 5 anos (100 = a maior).
             </p>
           </section>
         </>

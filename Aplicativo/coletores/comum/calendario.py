@@ -48,6 +48,22 @@ def eh_dia_util(dia: date, feriados: set[date]) -> bool:
     return dia.weekday() < 5 and dia not in feriados
 
 
+def dias_uteis_recentes(hoje: date, ultima: date | None, maximo: int) -> list[date]:
+    """Dias úteis após `ultima` (exclusive) até `hoje`, limitados aos `maximo` mais recentes.
+
+    Fontes que só publicam alguns dias para trás (ex.: arquivos diários da ANBIMA) usam
+    este recorte; o que não estiver mais disponível é simplesmente ignorado.
+    """
+    feriados = set(feriados_nacionais(hoje.year)) | set(feriados_nacionais(hoje.year - 1))
+    dias: list[date] = []
+    dia = hoje
+    while len(dias) < maximo and (ultima is None or dia > ultima):
+        if eh_dia_util(dia, feriados):
+            dias.append(dia)
+        dia -= timedelta(days=1)
+    return sorted(dias)
+
+
 def dias_uteis(inicio: date, fim: date, feriados: set[date]) -> int:
     """Dias úteis em (inicio, fim]: mesma convenção da função SQL public.dias_uteis."""
     total = 0

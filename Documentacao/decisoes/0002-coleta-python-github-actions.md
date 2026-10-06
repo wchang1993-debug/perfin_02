@@ -14,6 +14,9 @@ na Vercel, que não executa Python agendado de forma simples.
   ANBIMA e B3), mais execução manual. Os testes rodam antes da coleta.
 - Valores em `Decimal`; parsers validam o layout e **falham explicitamente** se a fonte mudar.
 - Coleta ANBIMA/B3 atrás da variável `COLETA_ANBIMA_B3_ATIVA` até a validação dos termos de uso.
+- ANBIMA (07/10/2026): arquivos públicos de títulos (`ms`), debêntures (`db`), IMA (`ima_completo`) e curvas
+  (`CZ-down.asp`), buscando só os dias úteis que faltam (no máximo 5). B3 ainda sem coletor: o endereço antigo de
+  ajustes foi desativado e o serviço novo do Boletim Diário estava indisponível na implementação.
 
 ## Alternativas consideradas
 - **Vercel Cron com coletor em TypeScript**: descartada por pedido do time (script em Python) e pelo limite de tempo das funções.

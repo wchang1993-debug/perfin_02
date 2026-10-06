@@ -1,4 +1,5 @@
 import "server-only";
+import { ErroConsulta, rpc } from "@/lib/supabase/rpc";
 import { clienteSupabaseServidor } from "@/lib/supabase/servidor";
 import type {
   CodigoIndicador,
@@ -14,22 +15,6 @@ import type {
 } from "./tipos";
 
 // Todas as consultas usam a sessão do usuário: o RLS garante que só administradores leem.
-
-export class ErroConsulta extends Error {
-  constructor(origem: string) {
-    super(`Não foi possível carregar ${origem}.`);
-  }
-}
-
-async function rpc<T>(funcao: string, parametros: Record<string, unknown> = {}): Promise<T> {
-  const supabase = await clienteSupabaseServidor();
-  const { data, error } = await supabase.rpc(funcao, parametros);
-  if (error) {
-    console.error(`[consultas] rpc ${funcao} falhou: ${error.code ?? ""} ${error.message}`);
-    throw new ErroConsulta(funcao);
-  }
-  return data as T;
-}
 
 export function ultimosValores(): Promise<UltimoValor[]> {
   return rpc<UltimoValor[]>("ultimos_valores");

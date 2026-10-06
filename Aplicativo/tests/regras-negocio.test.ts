@@ -125,6 +125,7 @@ describe("relatório do mês", () => {
       comparativoAno: [],
       comparativo12m: [],
       series: [{ codigo: "IPCA", nome: "IPCA", pontos: [{ data: "2026-09-01", valor: 0.4 }] }],
+      mercado: null,
     };
     const abas = montarAbas(dados);
     expect(abas.map((a) => a.nome)).toEqual(["Resumo", "Destaques", "Comparativo", "Séries", "Notas"]);
@@ -133,7 +134,7 @@ describe("relatório do mês", () => {
 
   it("e-mail traz no máximo 5 destaques e o aviso", () => {
     const destaques = Array.from({ length: 7 }, (_, i) => ({ id: `${i}`, severidade: "informativo" as const, raridade: 0, texto: `D${i}` }));
-    const corpo = corpoEmail({ mes: "2026-09-01", destaques, urlPlanilha: "https://exemplo.com/planilha" });
+    const corpo = corpoEmail({ mes: "2026-09-01", destaques, urlPlanilha: "https://exemplo.com/planilha", comAnbima: false });
     expect(corpo.match(/^• /gm)).toHaveLength(5);
     expect(corpo).toContain("Não constitui recomendação de investimento");
   });

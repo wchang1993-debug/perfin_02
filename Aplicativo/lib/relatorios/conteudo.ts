@@ -2,13 +2,18 @@ import type { Destaque } from "@/lib/destaques/tipos";
 import { formatarMes } from "@/lib/formatacao";
 import type { Aba, Celula } from "@/lib/google/planilhas";
 import type { Simulacao, StatusMeta } from "@/lib/indicadores/tipos";
+import { abasMercado, temDadosAnbima, type DadosMercadoRelatorio } from "./conteudo-mercado";
 
 // Conteúdo do relatório mensal (regra A6). Funções puras: recebem dados já calculados no banco.
 
 export const INDICADORES_MENSAIS = ["IPCA", "IPCA15", "INPC", "IGPM", "POUP"] as const;
-export const AVISO_LEGAL =
-  "Material informativo, elaborado com dados públicos do Banco Central do Brasil e do Tesouro Nacional. " +
-  "Não constitui recomendação de investimento.";
+// O aviso cita as fontes efetivamente usadas no material.
+export function avisoLegal(comAnbima: boolean): string {
+  const fontes = comAnbima
+    ? "Banco Central do Brasil, Tesouro Nacional e ANBIMA"
+    : "Banco Central do Brasil e Tesouro Nacional";
+  return `Material informativo, elaborado com dados públicos de ${fontes}. Não constitui recomendação de investimento.`;
+}
 
 export interface LinhaResumo {
   codigo: string;
@@ -29,6 +34,7 @@ export interface DadosRelatorio {
   comparativoAno: Simulacao[];
   comparativo12m: Simulacao[];
   series: { codigo: string; nome: string; pontos: { data: string; valor: number }[] }[];
+  mercado: DadosMercadoRelatorio | null;
 }
 
 export function statusDoRelatorio(resumo: LinhaResumo[]): { status: "completo" | "preliminar"; faltantes: string[] } {
@@ -86,19 +92,21 @@ export function montarAbas(dados: DadosRelatorio): Aba[] {
     [`Mês de referência: ${formatarMes(dados.mes)}`],
     [`Extraído em: ${dados.geradoEm}`],
     ["Fontes: BCB/SGS (433 IPCA, 7478 IPCA-15, 188 INPC, 189 IGP-M, 195 Poupança, 432 Selic, 12 CDI, 1 PTAX dólar, 21619 PTAX euro); Tesouro Transparente."],
+    ...(temDadosAnbima(dados.mercado) ? [["ANBIMA: ETTJ (curvas pré, real e implícita), índices IMA, taxas indicativas de títulos públicos e debêntures."]] : []),
     ["Fórmulas: acumulados por capitalização composta (∏(1+taxa) − 1); câmbio pela variação entre o primeiro e o último dia do período."],
-    [AVISO_LEGAL],
+    [avisoLegal(temDadosAnbima(dados.mercado))],
   ];
   return [
     abaResumo(dados),
     { nome: "Destaques", linhas: [["Destaque"], ...dados.destaques.map((d) => [d.texto])] },
+    ...abasMercado(dados.mercado),
     abaComparativo(dados),
     abaSeries(dados),
     { nome: "Notas", linhas: notas },
   ];
 }
 
-export function corpoEmail(dados: { mes: string; destaques: Destaque[]; urlPlanilha: string }): string {
+export function corpoEmail(dados: { mes: string; destaques: Destaque[]; urlPlanilha: string; comAnbima: boolean }): string {
   return [
     "Olá,",
     "",
@@ -108,6 +116,6 @@ export function corpoEmail(dados: { mes: string; destaques: Destaque[]; urlPlani
     "",
     `Planilha: ${dados.urlPlanilha}`,
     "",
-    AVISO_LEGAL,
+    avisoLegal(dados.comAnbima),
   ].join("\n");
 }

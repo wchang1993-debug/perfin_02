@@ -1,4 +1,5 @@
-import { formatarData, formatarMes, formatarPercentual, formatarReais } from "@/lib/formatacao";
+import { DU_5A } from "@/lib/destaques/mercado";
+import { formatarBps, formatarData, formatarMes, formatarPercentual, formatarReais } from "@/lib/formatacao";
 import type { Painel } from "./painel";
 import type { UltimoValor } from "./tipos";
 
@@ -63,5 +64,41 @@ export function montarCartoes(painel: Painel): DadosCartao[] {
   }
   cartoes.push({ rotulo: "Juro real ex-post 12m", valor: formatarPercentual(dados.juroReal12m), detalhe: "CDI descontado o IPCA" });
   cartoes.push({ rotulo: "IGP-M 12 meses", valor: formatarPercentual(dados.igpm12m), referencia: referencia(u("IGPM")) });
+  return [...cartoes, ...cartoesMercado(painel)];
+}
+
+// Cartões de mercado (ANBIMA): só aparecem quando a fonte tem dados coletados.
+function cartoesMercado({ mercado, dados }: Painel): DadosCartao[] {
+  if (!mercado) return [];
+  const cartoes: DadosCartao[] = [];
+  const { datas } = mercado;
+  const cinco = mercado.dados.deslocamentos.find((v) => v.du === DU_5A);
+  if (cinco?.implicita != null) {
+    const acima = dados.meta !== null && cinco.implicita > dados.meta.teto;
+    cartoes.push({
+      rotulo: "Inflação implícita 5a",
+      valor: formatarPercentual(cinco.implicita),
+      selo: dados.meta ? { texto: acima ? "Acima do teto" : "Dentro da banda", atencao: acima } : undefined,
+      referencia: `ETTJ ANBIMA · ${formatarData(datas.curvas)}`,
+    });
+  }
+  const imaB = mercado.dados.imaB;
+  if (imaB?.variacaoMes != null) {
+    cartoes.push({
+      rotulo: "IMA-B no mês",
+      valor: formatarPercentual(imaB.variacaoMes, 2, true),
+      detalhe: imaB.percentualCdi !== null ? `${formatarPercentual(imaB.percentualCdi, 0)} do CDI` : undefined,
+      referencia: `ANBIMA · ${formatarData(datas.indices)}`,
+    });
+  }
+  const credito = mercado.dados.medianasIpca.at(-1);
+  if (credito) {
+    cartoes.push({
+      rotulo: "Spread debêntures IPCA+",
+      valor: formatarBps(credito.mediana, false),
+      detalhe: "Mediana sobre a NTN-B de referência",
+      referencia: `ANBIMA · ${formatarData(credito.data)}`,
+    });
+  }
   return cartoes;
 }
