@@ -8,6 +8,11 @@ O Portal roda **somente** pela URL da Vercel. A URL pública vem de `NEXT_PUBLIC
    `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`,
    `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_TOKEN_ENCRYPTION_KEY`, `ADMIN_EMAILS`, `GEMINI_API_KEY`, `GEMINI_MODEL`.
 3. Depois de saber a URL (`https://<app>.vercel.app`), ajuste `NEXT_PUBLIC_SITE_URL` e **refaça o deploy**.
+   - Formato: só o domínio, com `https://` (ex.: `https://nome.vercel.app`). Barra final e espaços são ignorados;
+     `http://`, caminho (`/auth/callback`) ou parâmetros fazem o app falhar com mensagem explicando o erro.
+   - Variáveis `NEXT_PUBLIC_*` entram no build: mudar o valor sem refazer o deploy não tem efeito.
+   - Se a URL mudar (domínio próprio, outro projeto), atualize também as origens no Google e a URL Configuration no
+     Supabase (seções 2 e 3) com o mesmo domínio.
 
 ## 2. Google Cloud Console
 1. Crie o projeto e ative as APIs **Google Calendar**, **Google Drive**, **Google Sheets** e **Gmail**.

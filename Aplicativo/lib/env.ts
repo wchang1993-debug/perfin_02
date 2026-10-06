@@ -1,10 +1,18 @@
 import "server-only";
 import { z } from "zod";
+import { normalizarUrlSite } from "./url-site";
 
 // Variáveis só do servidor. Validadas na primeira leitura: falha cedo e com mensagem clara
 // (sem expor valores) se o deploy estiver sem alguma configuração.
 const esquemaServidor = z.object({
-  NEXT_PUBLIC_SITE_URL: z.url(),
+  NEXT_PUBLIC_SITE_URL: z.string().transform((valor, ctx) => {
+    try {
+      return normalizarUrlSite(valor);
+    } catch (erro) {
+      ctx.addIssue({ code: "custom", message: erro instanceof Error ? erro.message : "inválida" });
+      return z.NEVER;
+    }
+  }),
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
   SUPABASE_SECRET_KEY: z.string().min(1),
