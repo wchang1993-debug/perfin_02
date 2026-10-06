@@ -1,0 +1,49 @@
+# ------------------------------------------------------------------
+# IMPORTANTE: a pasta .claude/ (agentes, skills, regras, hooks e
+# settings.json) DEVE ser versionada e enviada ao GitHub, pois define
+# como o Claude Code trabalha neste projeto para toda a equipe.
+# Apenas as configurações pessoais/locais dela ficam de fora.
+# ------------------------------------------------------------------
+.claude/settings.local.json
+.claude/**/__pycache__/
+
+# Variáveis de ambiente (credenciais) — nunca versionar
+.env
+.env.*
+!.env.example
+
+# Anotações locais com credenciais — nunca versionar
+dados_perfin.txt
+
+# Dependências
+node_modules/
+.pnpm-store/
+
+# Builds e caches
+.next/
+out/
+dist/
+build/
+coverage/
+.turbo/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+.pytest_cache/
+__pycache__/
+*.py[cod]
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Sistema operacional e editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/*
+!.vscode/extensions.json
+.idea/
